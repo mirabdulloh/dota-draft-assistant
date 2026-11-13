@@ -3,6 +3,7 @@ import { migrate, ingest, aggregate, DEFAULT_K } from './ingest.ts';
 import { report } from './report.ts';
 import { backtest } from './backtest.ts';
 import { demo } from './demo.ts';
+import { validateSafeMode } from './safe-validation.ts';
 
 function flag(name: string, fallback: number): number {
   const i = process.argv.indexOf(`--${name}`);
@@ -25,6 +26,7 @@ usage: node src/cli.ts <command> [options]
   aggregate   recompute matchups/synergies from stored matches
   backtest    train/test split, predict winners on held-out matches
   demo        print live suggestions for sample drafts
+  safe-check  validate SAFE mode against held-out outcomes
   report      show what is currently in the database
 
 options:
@@ -81,10 +83,15 @@ async function main() {
       await demo(db, { bracket: flag('bracket', 5), patch: opts.patch });
     }
 
+    if (cmd === 'safe-check') {
+      await migrate(db);
+      await validateSafeMode(db, { k: opts.k, patch: opts.patch, maxLineups: flag('lineups', 40000) });
+    }
+
     if (cmd === 'report') await migrate(db);
     if (['rebuild', 'aggregate', 'report'].includes(cmd)) await report(db, opts.patch);
 
-    if (!['rebuild', 'ingest', 'aggregate', 'report', 'backtest', 'demo'].includes(cmd)) {
+    if (!['rebuild', 'ingest', 'aggregate', 'report', 'backtest', 'demo', 'safe-check'].includes(cmd)) {
       console.log(USAGE);
     }
   } finally {

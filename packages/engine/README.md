@@ -102,9 +102,11 @@ is a trap. Ranked ascending.
   expect occasional nonsense until real position data replaces it wholesale.
 
   The backtest is unaffected: it calls `predictRadiantEdge`, not `suggest`.
-- **SAFE mode is unvalidated.** The backtest predicts a winner from the final ten heroes,
-  which exercises counter and synergy. It cannot score SAFE mode, because a historical draft
-  contains no counterfactual for the first pick — you never observe what would have happened
-  had they picked something else. SAFE mode is the stated differentiator, so it needs a
-  validation design of its own.
+- **SAFE mode is validated and it FAILS.** See [SAFE-MODE.md](./SAFE-MODE.md). Held out on
+  399,312 matches against 40,000 enemy lineups, `exposure` adds nothing beyond hero win rate
+  (partial correlation +0.091) and a plain tier list beats it on both mean and downside.
+  The construct is also inverted — high-exposure heroes have *tighter* outcome distributions,
+  not worse tails — and the pick-rate weighting assumes a passive enemy, which is the
+  opposite of the first-pick situation. Do not ship it as the differentiator. The one
+  untested rescue is splitting the analysis by position, which needs STRATZ.
 - **`w_comfort` is not implemented.** It needs a linked Steam ID.
