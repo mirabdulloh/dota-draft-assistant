@@ -1,0 +1,20 @@
+{
+  "name": "@dota/worker",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Nightly ingestion: OpenDota public matches -> matchups, synergies, hero baselines",
+  "scripts": {
+    "ingest": "node src/cli.ts ingest",
+    "aggregate": "node src/cli.ts aggregate",
+    "rebuild": "node src/cli.ts rebuild",
+    "report": "node src/cli.ts report",
+    "backtest": "node src/cli.ts backtest"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.2.17",
+    "pg": "^8.13.1",
+    "dotaconstants": "^10.8.0",
+    "@dota/engine": "*"
+  }
+}

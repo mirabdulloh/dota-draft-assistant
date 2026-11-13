@@ -1,0 +1,14 @@
+{
+  "name": "spike-ocr",
+  "private": true,
+  "type": "module",
+  "description": "SPIKE-OCR rung 1: can we identify Dota 2 hero portraits from clean screenshot-quality crops?",
+  "scripts": {
+    "portraits": "node src/fetch-portraits.ts",
+    "bench": "node src/bench.ts"
+  },
+  "dependencies": {
+    "dotaconstants": "^10.8.0",
+    "sharp": "^0.33.0"
+  }
+}

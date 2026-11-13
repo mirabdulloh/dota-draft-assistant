@@ -1,0 +1,14 @@
+{
+  "name": "dota-draft",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Dota 2 draft assistant — reactive pick and item suggestions",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "ingest": "npm run ingest --workspace @dota/worker",
+    "rebuild": "npm run rebuild --workspace @dota/worker"
+  }
+}

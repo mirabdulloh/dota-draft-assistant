@@ -1,0 +1,4 @@
+node_modules/
+data/portraits/
+data/screenshots/*
+!data/screenshots/README.md

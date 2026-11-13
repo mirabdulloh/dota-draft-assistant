@@ -1,0 +1,11 @@
+{
+  "name": "@dota/engine",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Pure scoring engine. Zero I/O, zero dependencies — shared by the API, the worker's backtest, and the mobile app.",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
