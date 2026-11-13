@@ -139,6 +139,24 @@ cleanly at a patch boundary.
 5. Bracket choice is now partly a data question, not only a taste question: Immortal is not
    available from OpenDota.
 
+## 6. Position data cannot come from OpenDota — checked and ruled out
+
+`public_matches` has no position column, but OpenDota's `player_matches` table does have
+`lane_role`, `is_roaming` and `gold_per_min`, which is exactly what you need to derive
+positions (lane, then GPM rank within the lane). Recent rows exist. It looked like a way to
+avoid STRATZ entirely.
+
+It is not, because `player_matches` only holds **parsed** matches:
+
+| In a 1M `match_id` range (~1 day) | count |
+|---|---|
+| matches in `public_matches` | 645,766 |
+| matches parsed into `player_matches` | **13** |
+| player rows | 130 |
+
+0.002% parse coverage. Filling 635 position cells (127 heroes x 5) to ~300 games each would
+take roughly **1,465 days**. The route is closed; do not re-investigate it.
+
 ## Still blocked
 
 **STRATZ.** The brief makes per-position data mandatory — a hero's pos-5 win rate tells you

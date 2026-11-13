@@ -108,12 +108,20 @@ export function createEngine(snapshot: Snapshot, options: EngineOptions = {}) {
     const taken = new Set([...draft.enemies, ...draft.allies, ...draft.banned]);
 
     const missing: string[] = [];
-    if (!snapshot.positionWinRate) missing.push('position data');
+    if (!snapshot.positionWinRate) {
+      missing.push(
+        snapshot.positionEligible
+          ? 'position win rates (using coarse role filter)'
+          : 'position data',
+      );
+    }
 
+    const eligible = snapshot.positionEligible;
     const scored: Suggestion[] = [];
     for (let i = 0; i < n; i++) {
       const heroId = snapshot.heroIds[i];
       if (taken.has(heroId)) continue;
+      if (eligible && eligible[i * 5 + (draft.myPosition - 1)] === 0) continue;
 
       let counter = 0;
       let risk = 0;

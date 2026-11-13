@@ -85,9 +85,23 @@ is a trap. Ranked ascending.
 
 ## Known gaps
 
-- **No position data.** `roleFit` and `flexibility` return 0 and `suggest()` reports
-  `missing: ['position data']` rather than inventing a number. OpenDota's public match data
-  carries no positions; this needs STRATZ.
+- **No position win rates.** `roleFit` and `flexibility` return 0 and `suggest()` reports
+  `missing: ['position win rates (using coarse role filter)']` rather than inventing a
+  number. Neither OpenDota's `public_matches` nor its `player_matches` can supply positions
+  at usable volume (0.002% parse coverage — see `spikes/data/FINDINGS.md`). This needs STRATZ.
+
+  In the meantime `snapshot.positionEligible` carries a coarse 1/0 mask derived from Valve's
+  `roles` metadata. It **gates candidates and contributes no score**, so it cannot fabricate
+  a number. Eligible heroes per position: 72 / 118 / 106 / 62 / 48.
+
+  What it fixes: asking for position 5 no longer returns five hard carries.
+
+  What it cannot do: **tell positions 1, 2 and 3 apart.** Role metadata has no concept of
+  lane, so all three are "cores" and return identical lists. It also inherits Valve's own
+  oddities — Axe and Tidehunter are tagged `Carry`, Wraith King is tagged `Support` — so
+  expect occasional nonsense until real position data replaces it wholesale.
+
+  The backtest is unaffected: it calls `predictRadiantEdge`, not `suggest`.
 - **SAFE mode is unvalidated.** The backtest predicts a winner from the final ten heroes,
   which exercises counter and synergy. It cannot score SAFE mode, because a historical draft
   contains no counterfactual for the first pick — you never observe what would have happened

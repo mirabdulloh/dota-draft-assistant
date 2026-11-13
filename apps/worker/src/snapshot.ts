@@ -1,17 +1,9 @@
-import { heroes } from 'dotaconstants';
 import type { Snapshot } from '@dota/engine';
 import type { Aggregator } from './aggregate.ts';
+import { heroIndex } from './hero-index.ts';
+import { buildPositionEligibility } from './role-mask.ts';
 
-/**
- * Hero index order comes from dotaconstants, not from what happens to appear in
- * the data, so indices stay stable between snapshots and a phone holding an old
- * snapshot does not silently misread a new one.
- */
-export function heroIndex(): number[] {
-  return Object.values(heroes as Record<string, { id: number }>)
-    .map((h) => h.id)
-    .sort((a, b) => a - b);
-}
+export { heroIndex };
 
 export function buildSnapshot(
   agg: Aggregator,
@@ -76,5 +68,6 @@ export function buildSnapshot(
     advConfidence,
     synergy,
     synConfidence,
+    positionEligible: buildPositionEligibility(),
   };
 }

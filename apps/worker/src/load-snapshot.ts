@@ -1,6 +1,7 @@
 import type { Snapshot } from '@dota/engine';
 import type { Db } from './db.ts';
-import { heroIndex } from './snapshot.ts';
+import { heroIndex } from './hero-index.ts';
+import { buildPositionEligibility } from './role-mask.ts';
 
 /**
  * Rebuilds a snapshot from the stored aggregates rather than from raw matches.
@@ -72,5 +73,6 @@ export async function loadSnapshot(
     advConfidence,
     synergy,
     synConfidence,
+    positionEligible: buildPositionEligibility(),
   };
 }

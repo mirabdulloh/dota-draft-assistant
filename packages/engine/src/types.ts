@@ -25,6 +25,13 @@ export type Snapshot = {
    * position data is wired up — OpenDota's public match data has none.
    */
   positionWinRate?: Float32Array;
+  /**
+   * Coarse 1/0 eligibility by position, `i * 5 + (pos - 1)`, derived from
+   * Valve's `roles` metadata. A stopgap so the engine does not offer hard
+   * carries for position 5; it gates candidates but contributes no score.
+   * Superseded by `positionWinRate` once real position data exists.
+   */
+  positionEligible?: Uint8Array;
 };
 
 export type Position = 1 | 2 | 3 | 4 | 5;
