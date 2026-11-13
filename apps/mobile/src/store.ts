@@ -1,4 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import type { PickOrder, Position } from '@dota/engine';
 import type { Bracket } from './snapshot';
 
@@ -31,61 +33,79 @@ type DraftStore = {
 
 const empty = () => [null, null, null, null, null] as (number | null)[];
 
-export const useDraft = create<DraftStore>((set) => ({
-  bracket: 5,
-  position: 5,
-  pickOrder: 'last',
-  enemies: empty(),
-  // Four ally slots: the fifth is the user's own pick, which is what we suggest.
-  allies: [null, null, null, null],
-  started: false,
-  showItems: false,
-  myHero: null,
-  banned: [],
-  detailHero: null,
-  picking: null,
-
-  setBracket: (bracket) => set({ bracket }),
-  setPosition: (position) => set({ position }),
-  setPickOrder: (pickOrder) => set({ pickOrder }),
-  start: () => set({ started: true }),
-  reset: () =>
-    set({
+/**
+ * Only the three setup answers are persisted. The draft board itself is
+ * deliberately not: opening the app days later to a half-finished game from
+ * another session is worse than starting clean.
+ */
+export const useDraft = create<DraftStore>()(
+  persist(
+    (set) => ({
+      bracket: 5,
+      position: 5,
+      pickOrder: 'last',
+      enemies: empty(),
+      // Four ally slots: the fifth is the user's own pick, which is what we suggest.
+      allies: [null, null, null, null],
       started: false,
       showItems: false,
       myHero: null,
       banned: [],
       detailHero: null,
-      enemies: empty(),
-      allies: [null, null, null, null],
       picking: null,
+
+      setBracket: (bracket) => set({ bracket }),
+      setPosition: (position) => set({ position }),
+      setPickOrder: (pickOrder) => set({ pickOrder }),
+      start: () => set({ started: true }),
+      reset: () =>
+        set({
+          started: false,
+          showItems: false,
+          myHero: null,
+          banned: [],
+          detailHero: null,
+          enemies: empty(),
+          allies: [null, null, null, null],
+          picking: null,
+        }),
+      setShowItems: (showItems) => set({ showItems }),
+      setDetailHero: (detailHero) => set({ detailHero }),
+      openPicker: (picking) => set({ picking }),
+      assign: (heroId) =>
+        set((s) => {
+          if (!s.picking) return s;
+          const { team, index } = s.picking;
+          if (team === 'me') return { myHero: heroId, picking: null } as Partial<DraftStore>;
+          // Tapping an already-banned hero in ban mode lifts the ban.
+          if (team === 'ban') {
+            const banned = s.banned.includes(heroId)
+              ? s.banned.filter((b) => b !== heroId)
+              : [...s.banned, heroId];
+            return { banned } as Partial<DraftStore>;
+          }
+          const key = team === 'enemy' ? 'enemies' : 'allies';
+          const next = [...s[key]];
+          next[index] = heroId;
+          return { [key]: next, picking: null } as Partial<DraftStore>;
+        }),
+      clearSlot: (team, index) =>
+        set((s) => {
+          if (team === 'me') return { myHero: null } as Partial<DraftStore>;
+          const key = team === 'enemy' ? 'enemies' : 'allies';
+          const next = [...s[key]];
+          next[index] = null;
+          return { [key]: next } as Partial<DraftStore>;
+        }),
     }),
-  setShowItems: (showItems) => set({ showItems }),
-  setDetailHero: (detailHero) => set({ detailHero }),
-  openPicker: (picking) => set({ picking }),
-  assign: (heroId) =>
-    set((s) => {
-      if (!s.picking) return s;
-      const { team, index } = s.picking;
-      if (team === 'me') return { myHero: heroId, picking: null } as Partial<DraftStore>;
-      // Tapping an already-banned hero in ban mode lifts the ban.
-      if (team === 'ban') {
-        const banned = s.banned.includes(heroId)
-          ? s.banned.filter((b) => b !== heroId)
-          : [...s.banned, heroId];
-        return { banned } as Partial<DraftStore>;
-      }
-      const key = team === 'enemy' ? 'enemies' : 'allies';
-      const next = [...s[key]];
-      next[index] = heroId;
-      return { [key]: next, picking: null } as Partial<DraftStore>;
-    }),
-  clearSlot: (team, index) =>
-    set((s) => {
-      if (team === 'me') return { myHero: null } as Partial<DraftStore>;
-      const key = team === 'enemy' ? 'enemies' : 'allies';
-      const next = [...s[key]];
-      next[index] = null;
-      return { [key]: next } as Partial<DraftStore>;
-    }),
-}));
+    {
+      name: 'dota-draft-preferences',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (s) => ({
+        bracket: s.bracket,
+        position: s.position,
+        pickOrder: s.pickOrder,
+      }),
+    },
+  ),
+);
