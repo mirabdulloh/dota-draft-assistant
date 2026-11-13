@@ -8,6 +8,12 @@ export type Snapshot = {
   bracket: number;
   builtAt: string;
   matchesUsed: number;
+  /**
+   * Shrinkage pseudo-count used to build this snapshot. Carried so the UI can
+   * recover the real sample behind a matchup — games = k * conf / (1 - conf) —
+   * and show it. Hiding sample size is how these tools lose trust.
+   */
+  k: number;
   /** Dense index -> Dota hero id. Hero ids are sparse (1..155), indices are not. */
   heroIds: number[];
   /** Win rate of each hero in this bracket. */

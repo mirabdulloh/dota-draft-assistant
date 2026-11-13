@@ -236,7 +236,52 @@ export function createEngine(snapshot: Snapshot, options: EngineOptions = {}) {
     return w.meta * meta + w.counter * counter + w.synergy * syn;
   }
 
-  return { suggest, exposure, predictRadiantEdge, modeFor, indexOf: idx, heroCount: n };
+  /**
+   * Why a hero is being suggested, matchup by matchup. `games` is recovered
+   * exactly from the stored confidence and the snapshot's shrinkage constant,
+   * so the UI can show the real sample rather than only a dot rating.
+   */
+  function explain(heroId: number, draft: DraftState) {
+    const i = idx(heroId);
+    const k = snapshot.k;
+    const games = (conf: number) => (conf >= 1 ? Infinity : Math.round((k * conf) / (1 - conf)));
+
+    const vs = draft.enemies
+      .map((id) => {
+        const j = idx(id);
+        return {
+          heroId: id,
+          /** How much this hero gains against that enemy. */
+          advantage: advantage(i, j),
+          /** How much that enemy gains against this hero — the asymmetric risk. */
+          risk: advantage(j, i),
+          confidence: advConf(i, j),
+          games: games(advConf(i, j)),
+        };
+      })
+      .sort((a, b) => b.advantage - a.advantage);
+
+    const withAllies = draft.allies.map((id) => {
+      const j = idx(id);
+      return {
+        heroId: id,
+        synergy: synergy(i, j),
+        confidence: snapshot.synConfidence[i * n + j],
+        games: games(snapshot.synConfidence[i * n + j]),
+      };
+    });
+
+    return {
+      heroId,
+      baseline: snapshot.baseline[i],
+      pickRate: snapshot.pickRate[i],
+      exposure: exposure(i),
+      vs,
+      withAllies,
+    };
+  }
+
+  return { suggest, exposure, explain, predictRadiantEdge, modeFor, indexOf: idx, heroCount: n };
 }
 
 export type Engine = ReturnType<typeof createEngine>;

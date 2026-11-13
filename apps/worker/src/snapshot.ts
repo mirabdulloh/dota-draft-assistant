@@ -61,6 +61,7 @@ export function buildSnapshot(
     bracket: opts.bracket,
     builtAt: new Date().toISOString(),
     matchesUsed: bracketMatches,
+    k: opts.k,
     heroIds: ids,
     baseline,
     pickRate,

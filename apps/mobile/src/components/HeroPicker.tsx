@@ -21,11 +21,18 @@ export function HeroPicker() {
   const close = useDraft((s) => s.openPicker);
   const enemies = useDraft((s) => s.enemies);
   const allies = useDraft((s) => s.allies);
+  const banned = useDraft((s) => s.banned);
   const [query, setQuery] = useState('');
 
+  const banMode = picking?.team === 'ban';
   const taken = useMemo(
-    () => new Set([...enemies, ...allies].filter((x): x is number => x != null)),
-    [enemies, allies],
+    () =>
+      new Set(
+        banMode
+          ? []
+          : [...enemies, ...allies, ...banned].filter((x): x is number => x != null),
+      ),
+    [enemies, allies, banned, banMode],
   );
 
   const results = useMemo(() => {
@@ -41,14 +48,15 @@ export function HeroPicker() {
 
   const renderItem = ({ item }: { item: HeroMeta }) => {
     const used = taken.has(item.id);
+    const isBanned = banned.includes(item.id);
     return (
       <Pressable
         disabled={used}
         onPress={() => {
           assign(item.id);
-          setQuery('');
+          if (!banMode) setQuery('');
         }}
-        style={[st.cell, used && st.cellUsed]}
+        style={[st.cell, used && st.cellUsed, isBanned && st.cellBanned]}
       >
         <Image source={{ uri: portraitUrl(item.slug) }} style={st.portrait} />
         <Text numberOfLines={1} style={[st.cellName, used && st.cellNameUsed]}>
@@ -63,7 +71,13 @@ export function HeroPicker() {
       <View style={st.root}>
         <View style={st.header}>
           <Text style={st.title}>
-            {picking?.team === 'enemy' ? 'Add enemy hero' : 'Add ally hero'}
+            {banMode
+              ? 'Bans — tap to toggle'
+              : picking?.team === 'enemy'
+                ? 'Add enemy hero'
+                : picking?.team === 'me'
+                  ? 'Your hero'
+                  : 'Add ally hero'}
           </Text>
           {/* Every state exits in one tap. */}
           <Pressable onPress={onClose} style={st.close} hitSlop={12}>
@@ -124,6 +138,7 @@ const st = StyleSheet.create({
   },
   cell: { flex: 1 / COLS, maxWidth: `${100 / COLS}%` },
   cellUsed: { opacity: 0.25 },
+  cellBanned: { opacity: 0.35 },
   portrait: {
     width: '100%',
     aspectRatio: 16 / 9,

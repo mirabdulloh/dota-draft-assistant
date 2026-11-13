@@ -63,6 +63,7 @@ export type SerialisedSnapshot = {
   bracket: number;
   builtAt: string;
   matchesUsed: number;
+  k: number;
   heroIds: number[];
   baseline: string;
   pickRate: string;
@@ -81,6 +82,7 @@ export function serialiseSnapshot(s: Snapshot): SerialisedSnapshot {
     bracket: s.bracket,
     builtAt: s.builtAt,
     matchesUsed: s.matchesUsed,
+    k: s.k,
     heroIds: s.heroIds,
     baseline: f32(s.baseline),
     pickRate: f32(s.pickRate),
@@ -100,6 +102,7 @@ export function deserialiseSnapshot(d: SerialisedSnapshot): Snapshot {
     bracket: d.bracket,
     builtAt: d.builtAt,
     matchesUsed: d.matchesUsed,
+    k: d.k ?? 300,
     heroIds: d.heroIds,
     baseline: readF32(d.baseline),
     pickRate: readF32(d.pickRate),

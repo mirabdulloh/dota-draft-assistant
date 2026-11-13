@@ -45,7 +45,8 @@ function Confidence({ value }: { value: number }) {
 
 export function DraftBoard() {
   const clearMine = () => useDraft.getState().clearSlot('me', 0);
-  const { position, pickOrder, enemies, allies, reset, openPicker, myHero, setShowItems } = useDraft();
+  const { position, pickOrder, enemies, allies, reset, openPicker, myHero, setShowItems, banned, setDetailHero } =
+    useDraft();
   const myMeta = myHero != null ? heroById.get(myHero) : undefined;
 
   const result = useMemo(() => {
@@ -56,12 +57,12 @@ export function DraftBoard() {
         pickOrder,
         enemies: enemies.filter((x): x is number => x != null),
         allies: allies.filter((x): x is number => x != null),
-        banned: [],
+        banned,
       },
       5,
     );
     return { ...r, ms: Date.now() - t0 };
-  }, [position, pickOrder, enemies, allies]);
+  }, [position, pickOrder, enemies, allies, banned]);
 
   const avoid = result.avoid[0];
 
@@ -104,14 +105,19 @@ export function DraftBoard() {
 
       <View style={st.bar}>
         <Text style={st.barTitle}>PICK NOW</Text>
-        <Text style={st.barMode}>{result.mode.replace('_', ' ')}</Text>
+        <View style={st.barRight}>
+          <Pressable onPress={() => openPicker({ team: 'ban', index: 0 })} hitSlop={10} style={st.banChip}>
+            <Text style={st.banText}>{banned.length ? `${banned.length} banned` : '+ bans'}</Text>
+          </Pressable>
+          <Text style={st.barMode}>{result.mode.replace('_', ' ')}</Text>
+        </View>
       </View>
 
       <ScrollView style={st.list} contentContainerStyle={{ paddingBottom: 16 }}>
         {result.picks.map((p, i) => {
           const meta = heroById.get(p.heroId);
           return (
-            <View key={p.heroId} style={st.pick}>
+            <Pressable key={p.heroId} onPress={() => setDetailHero(p.heroId)} style={st.pick}>
               <Text style={st.rank}>{i + 1}</Text>
               {meta && <Image source={{ uri: portraitUrl(meta.slug) }} style={st.pickImg} />}
               <View style={st.pickBody}>
@@ -130,7 +136,7 @@ export function DraftBoard() {
                   {p.reason}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           );
         })}
 
@@ -205,6 +211,16 @@ const st = StyleSheet.create({
   },
   barTitle: { color: C.text, fontSize: 13, fontWeight: '800', letterSpacing: 1.5 },
   barMode: { color: C.accent, fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  barRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  banChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.surface,
+  },
+  banText: { color: C.dim, fontSize: 11, fontWeight: '600' },
   list: { flex: 1, paddingHorizontal: S.pad },
   pick: {
     flexDirection: 'row',

@@ -1,6 +1,7 @@
 import type { Snapshot } from '@dota/engine';
 import type { Db } from './db.ts';
 import { heroIndex } from './hero-index.ts';
+import { DEFAULT_K } from './aggregate.ts';
 import { buildPositionEligibility } from './role-mask.ts';
 
 /**
@@ -66,6 +67,7 @@ export async function loadSnapshot(
     bracket: opts.bracket,
     builtAt: new Date().toISOString(),
     matchesUsed: matches,
+    k: DEFAULT_K,
     heroIds: ids,
     baseline,
     pickRate,

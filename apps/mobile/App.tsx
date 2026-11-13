@@ -6,6 +6,7 @@ import { DraftSetup } from './src/screens/DraftSetup';
 import { DraftBoard } from './src/screens/DraftBoard';
 import { ItemBuildScreen } from './src/screens/ItemBuild';
 import { HeroPicker } from './src/components/HeroPicker';
+import { SuggestionDetail } from './src/components/SuggestionDetail';
 
 export default function App() {
   const started = useDraft((s) => s.started);
@@ -15,6 +16,7 @@ export default function App() {
       <StatusBar style="light" />
       {!started ? <DraftSetup /> : showItems ? <ItemBuildScreen /> : <DraftBoard />}
       <HeroPicker />
+      <SuggestionDetail />
     </SafeAreaView>
   );
 }
