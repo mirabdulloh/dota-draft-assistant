@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { PickOrder, Position } from '@dota/engine';
 
-export type SlotTarget = { team: 'enemy' | 'ally'; index: number } | null;
+export type SlotTarget = { team: 'enemy' | 'ally' | 'me'; index: number } | null;
 
 type DraftStore = {
   position: Position;
@@ -9,6 +9,8 @@ type DraftStore = {
   enemies: (number | null)[];
   allies: (number | null)[];
   started: boolean;
+  showItems: boolean;
+  myHero: number | null;
   picking: SlotTarget;
 
   setPosition: (p: Position) => void;
@@ -16,8 +18,9 @@ type DraftStore = {
   start: () => void;
   reset: () => void;
   openPicker: (t: SlotTarget) => void;
+  setShowItems: (v: boolean) => void;
   assign: (heroId: number) => void;
-  clearSlot: (team: 'enemy' | 'ally', index: number) => void;
+  clearSlot: (team: 'enemy' | 'ally' | 'me', index: number) => void;
 };
 
 const empty = () => [null, null, null, null, null] as (number | null)[];
@@ -29,18 +32,29 @@ export const useDraft = create<DraftStore>((set) => ({
   // Four ally slots: the fifth is the user's own pick, which is what we suggest.
   allies: [null, null, null, null],
   started: false,
+  showItems: false,
+  myHero: null,
   picking: null,
 
   setPosition: (position) => set({ position }),
   setPickOrder: (pickOrder) => set({ pickOrder }),
   start: () => set({ started: true }),
   reset: () =>
-    set({ started: false, enemies: empty(), allies: [null, null, null, null], picking: null }),
+    set({
+      started: false,
+      showItems: false,
+      myHero: null,
+      enemies: empty(),
+      allies: [null, null, null, null],
+      picking: null,
+    }),
+  setShowItems: (showItems) => set({ showItems }),
   openPicker: (picking) => set({ picking }),
   assign: (heroId) =>
     set((s) => {
       if (!s.picking) return s;
       const { team, index } = s.picking;
+      if (team === 'me') return { myHero: heroId, picking: null } as Partial<DraftStore>;
       const key = team === 'enemy' ? 'enemies' : 'allies';
       const next = [...s[key]];
       next[index] = heroId;
@@ -48,6 +62,7 @@ export const useDraft = create<DraftStore>((set) => ({
     }),
   clearSlot: (team, index) =>
     set((s) => {
+      if (team === 'me') return { myHero: null } as Partial<DraftStore>;
       const key = team === 'enemy' ? 'enemies' : 'allies';
       const next = [...s[key]];
       next[index] = null;

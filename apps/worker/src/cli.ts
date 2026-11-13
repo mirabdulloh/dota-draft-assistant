@@ -29,6 +29,7 @@ usage: node src/cli.ts <command> [options]
   demo        print live suggestions for sample drafts
   safe-check  validate SAFE mode against held-out outcomes
   export      write the offline snapshot the app scores against
+              (--refresh-items re-pulls core builds, ~2.5 min)
   report      show what is currently in the database
 
 options:
@@ -96,6 +97,7 @@ async function main() {
         bracket: flag('bracket', 5),
         patch: opts.patch,
         out: strFlag('out', new URL('../../mobile/assets/snapshot.json', import.meta.url).pathname),
+        refreshItems: process.argv.includes('--refresh-items'),
       });
     }
 

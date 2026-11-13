@@ -4,14 +4,16 @@ import { C } from './src/theme';
 import { useDraft } from './src/store';
 import { DraftSetup } from './src/screens/DraftSetup';
 import { DraftBoard } from './src/screens/DraftBoard';
+import { ItemBuildScreen } from './src/screens/ItemBuild';
 import { HeroPicker } from './src/components/HeroPicker';
 
 export default function App() {
   const started = useDraft((s) => s.started);
+  const showItems = useDraft((s) => s.showItems);
   return (
     <SafeAreaView style={st.root}>
       <StatusBar style="light" />
-      {started ? <DraftBoard /> : <DraftSetup />}
+      {!started ? <DraftSetup /> : showItems ? <ItemBuildScreen /> : <DraftBoard />}
       <HeroPicker />
     </SafeAreaView>
   );

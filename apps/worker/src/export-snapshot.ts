@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { heroes } from 'dotaconstants';
 import { serialiseSnapshot, deserialiseSnapshot } from '@dota/engine';
+import { buildItemData } from './item-data.ts';
 import type { Db } from './db.ts';
 import { loadSnapshot } from './load-snapshot.ts';
 
@@ -12,7 +13,7 @@ import { loadSnapshot } from './load-snapshot.ts';
  */
 export async function exportSnapshot(
   db: Db,
-  opts: { bracket: number; patch: string; out: string },
+  opts: { bracket: number; patch: string; out: string; refreshItems: boolean },
 ): Promise<void> {
   const snapshot = await loadSnapshot(db, { bracket: opts.bracket, patch: opts.patch });
   // Hero names and portrait slugs travel with the snapshot so the app needs no
@@ -25,7 +26,8 @@ export async function exportSnapshot(
     }))
     .sort((a, b) => a.id - b.id);
 
-  const payload = { ...serialiseSnapshot(snapshot), heroes: meta };
+  const itemData = await buildItemData(opts.refreshItems);
+  const payload = { ...serialiseSnapshot(snapshot), heroes: meta, items: itemData };
   const json = JSON.stringify(payload);
 
   const back = deserialiseSnapshot(payload);
@@ -46,5 +48,7 @@ export async function exportSnapshot(
   console.log(`patch ${snapshot.patch}  bracket ${snapshot.bracket}  ${n} heroes`);
   console.log(`built from ${snapshot.matchesUsed.toLocaleString()} matches`);
   console.log(`round-trip verified, every value identical`);
+  const withCore = Object.values(itemData.core).filter((c) => c.length > 0).length;
+  console.log(`items: ${withCore} heroes with a core build, ${Object.keys(itemData.threats).length} tagged, ${itemData.rules.length} rules`);
   console.log(`wrote ${opts.out}  (${kb} KB, ${meta.length} heroes with names)`);
 }

@@ -44,7 +44,9 @@ function Confidence({ value }: { value: number }) {
 }
 
 export function DraftBoard() {
-  const { position, pickOrder, enemies, allies, reset, openPicker } = useDraft();
+  const clearMine = () => useDraft.getState().clearSlot('me', 0);
+  const { position, pickOrder, enemies, allies, reset, openPicker, myHero, setShowItems } = useDraft();
+  const myMeta = myHero != null ? heroById.get(myHero) : undefined;
 
   const result = useMemo(() => {
     const t0 = Date.now();
@@ -81,10 +83,21 @@ export function DraftBoard() {
             {allies.map((h, i) => (
               <Slot key={i} heroId={h} team="ally" index={i} />
             ))}
-            <View style={[st.slot, st.youSlot]}>
-              <Text style={st.youText}>YOU</Text>
-              <Text style={st.youPos}>pos {position}</Text>
-            </View>
+            <Pressable
+              onPress={() =>
+                myHero == null ? openPicker({ team: 'me', index: 0 }) : clearMine()
+              }
+              style={[st.slot, st.youSlot]}
+            >
+              {myMeta ? (
+                <Image source={{ uri: portraitUrl(myMeta.slug) }} style={st.slotImg} />
+              ) : (
+                <>
+                  <Text style={st.youText}>YOU</Text>
+                  <Text style={st.youPos}>pos {position}</Text>
+                </>
+              )}
+            </Pressable>
           </View>
         </View>
       </View>
@@ -138,9 +151,19 @@ export function DraftBoard() {
         <Pressable onPress={reset} style={[st.fBtn, st.fGhost]}>
           <Text style={st.fGhostText}>Reset</Text>
         </Pressable>
-        <Pressable onPress={() => openPicker({ team: 'enemy', index: enemies.findIndex((e) => e == null) })} style={[st.fBtn, st.fPrimary]} disabled={!enemies.includes(null)}>
-          <Text style={st.fPrimaryText}>Add enemy pick</Text>
-        </Pressable>
+        {myHero == null ? (
+          <Pressable
+            onPress={() => openPicker({ team: 'enemy', index: enemies.findIndex((e) => e == null) })}
+            style={[st.fBtn, st.fPrimary]}
+            disabled={!enemies.includes(null)}
+          >
+            <Text style={st.fPrimaryText}>Add enemy pick</Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={() => setShowItems(true)} style={[st.fBtn, st.fPrimary]}>
+            <Text style={st.fPrimaryText}>Draft done → items</Text>
+          </Pressable>
+        )}
       </View>
 
       <Text style={st.perf}>scored locally in {result.ms}ms · offline</Text>
