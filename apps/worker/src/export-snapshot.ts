@@ -1,24 +1,30 @@
 import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { join } from 'node:path';
 import { heroes } from 'dotaconstants';
 import { serialiseSnapshot, deserialiseSnapshot } from '@dota/engine';
-import { buildItemData } from './item-data.ts';
 import type { Db } from './db.ts';
 import { loadSnapshot } from './load-snapshot.ts';
+import { buildItemData } from './item-data.ts';
+
+const BRACKETS = [1, 2, 3, 4, 5, 6, 7];
+const BRACKET_NAME = ['', 'Herald', 'Guardian', 'Crusader', 'Archon', 'Legend', 'Ancient', 'Divine'];
 
 /**
- * Writes the blob the app downloads and scores against offline. Round-trips it
- * before writing: a snapshot that fails to decode is worse than no snapshot,
- * because the failure surfaces on the phone mid-draft rather than here.
+ * Writes what the app scores against offline.
+ *
+ * Hero names and item data are the same whatever bracket you play, so they go
+ * in one shared file rather than being duplicated seven times. Each bracket
+ * then ships only its own matrices.
  */
 export async function exportSnapshot(
   db: Db,
-  opts: { bracket: number; patch: string; out: string; refreshItems: boolean },
+  opts: { patch: string; outDir: string; refreshItems: boolean },
 ): Promise<void> {
-  const snapshot = await loadSnapshot(db, { bracket: opts.bracket, patch: opts.patch });
-  // Hero names and portrait slugs travel with the snapshot so the app needs no
-  // copy of dotaconstants, which is megabytes the phone would never read.
-  const meta = Object.values(heroes as Record<string, { id: number; localized_name: string; img: string }>)
+  await mkdir(opts.outDir, { recursive: true });
+
+  const meta = Object.values(
+    heroes as Record<string, { id: number; localized_name: string; img: string }>,
+  )
     .map((h) => ({
       id: h.id,
       name: h.localized_name,
@@ -27,28 +33,40 @@ export async function exportSnapshot(
     .sort((a, b) => a.id - b.id);
 
   const itemData = await buildItemData(opts.refreshItems);
-  const payload = { ...serialiseSnapshot(snapshot), heroes: meta, items: itemData };
-  const json = JSON.stringify(payload);
+  const sharedJson = JSON.stringify({ version: 1, heroes: meta, items: itemData });
+  await writeFile(join(opts.outDir, 'shared.json'), sharedJson);
 
-  const back = deserialiseSnapshot(payload);
-  const n = snapshot.heroIds.length;
-  for (const key of ['baseline', 'pickRate', 'advantage', 'synergy'] as const) {
-    const a = snapshot[key];
-    const b = back[key];
-    if (a.length !== b.length) throw new Error(`${key}: length ${a.length} -> ${b.length}`);
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) throw new Error(`${key}: mismatch at ${i} (${a[i]} vs ${b[i]})`);
+  const withCore = Object.values(itemData.core).filter((c) => c.length > 0).length;
+  console.log(
+    `shared.json  ${(sharedJson.length / 1024).toFixed(0)} KB  ` +
+      `(${meta.length} heroes, ${withCore} core builds, ${itemData.rules.length} item rules)`,
+  );
+  console.log('\nbracket      matches     size');
+
+  let total = sharedJson.length;
+  for (const bracket of BRACKETS) {
+    const snapshot = await loadSnapshot(db, { bracket, patch: opts.patch });
+    const payload = serialiseSnapshot(snapshot);
+
+    // A snapshot that fails to decode surfaces on the phone mid-draft rather
+    // than here, so every value is checked before it is written.
+    const back = deserialiseSnapshot(payload);
+    for (const key of ['baseline', 'pickRate', 'advantage', 'synergy'] as const) {
+      const a = snapshot[key];
+      const b = back[key];
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) throw new Error(`bracket ${bracket} ${key}: mismatch at ${i}`);
+      }
     }
+
+    const json = JSON.stringify(payload);
+    await writeFile(join(opts.outDir, `snapshot-${bracket}.json`), json);
+    total += json.length;
+    console.log(
+      `  ${BRACKET_NAME[bracket].padEnd(10)} ${snapshot.matchesUsed.toLocaleString().padStart(9)}` +
+        `  ${(json.length / 1024).toFixed(0).padStart(5)} KB`,
+    );
   }
 
-  await mkdir(dirname(opts.out), { recursive: true });
-  await writeFile(opts.out, json);
-
-  const kb = (json.length / 1024).toFixed(0);
-  console.log(`patch ${snapshot.patch}  bracket ${snapshot.bracket}  ${n} heroes`);
-  console.log(`built from ${snapshot.matchesUsed.toLocaleString()} matches`);
-  console.log(`round-trip verified, every value identical`);
-  const withCore = Object.values(itemData.core).filter((c) => c.length > 0).length;
-  console.log(`items: ${withCore} heroes with a core build, ${Object.keys(itemData.threats).length} tagged, ${itemData.rules.length} rules`);
-  console.log(`wrote ${opts.out}  (${kb} KB, ${meta.length} heroes with names)`);
+  console.log(`\nall seven brackets round-trip verified · ${(total / 1024 / 1024).toFixed(2)} MB total`);
 }

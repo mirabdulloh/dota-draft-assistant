@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { View, Text, Pressable, Image, StyleSheet, ScrollView } from 'react-native';
 import { C, S, portraitUrl } from '../theme';
 import { useDraft } from '../store';
-import { engine, heroById, heroName } from '../snapshot';
+import { engineFor, heroById, heroName } from '../snapshot';
 
 function Slot({
   heroId,
@@ -45,13 +45,13 @@ function Confidence({ value }: { value: number }) {
 
 export function DraftBoard() {
   const clearMine = () => useDraft.getState().clearSlot('me', 0);
-  const { position, pickOrder, enemies, allies, reset, openPicker, myHero, setShowItems, banned, setDetailHero } =
+  const { bracket, position, pickOrder, enemies, allies, reset, openPicker, myHero, setShowItems, banned, setDetailHero } =
     useDraft();
   const myMeta = myHero != null ? heroById.get(myHero) : undefined;
 
   const result = useMemo(() => {
     const t0 = Date.now();
-    const r = engine.suggest(
+    const r = engineFor(bracket).suggest(
       {
         myPosition: position,
         pickOrder,
@@ -62,7 +62,7 @@ export function DraftBoard() {
       5,
     );
     return { ...r, ms: Date.now() - t0 };
-  }, [position, pickOrder, enemies, allies, banned]);
+  }, [bracket, position, pickOrder, enemies, allies, banned]);
 
   const avoid = result.avoid[0];
 

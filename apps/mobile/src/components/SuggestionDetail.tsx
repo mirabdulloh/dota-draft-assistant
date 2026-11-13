@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Modal, View, Text, Pressable, Image, StyleSheet, ScrollView } from 'react-native';
 import { C, S, portraitUrl } from '../theme';
 import { useDraft } from '../store';
-import { engine, heroById, heroName } from '../snapshot';
+import { engineFor, heroById, heroName } from '../snapshot';
 
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${(n * 100).toFixed(2)}%`;
 
@@ -26,18 +26,18 @@ function Bar({ value, max }: { value: number; max: number }) {
  * a confident-looking score with nothing behind it.
  */
 export function SuggestionDetail() {
-  const { detailHero, setDetailHero, position, pickOrder, enemies, allies, banned } = useDraft();
+  const { detailHero, setDetailHero, bracket, position, pickOrder, enemies, allies, banned } = useDraft();
 
   const data = useMemo(() => {
     if (detailHero == null) return null;
-    return engine.explain(detailHero, {
+    return engineFor(bracket).explain(detailHero, {
       myPosition: position,
       pickOrder,
       enemies: enemies.filter((x): x is number => x != null),
       allies: allies.filter((x): x is number => x != null),
       banned,
     });
-  }, [detailHero, position, pickOrder, enemies, allies, banned]);
+  }, [detailHero, bracket, position, pickOrder, enemies, allies, banned]);
 
   const meta = detailHero != null ? heroById.get(detailHero) : undefined;
   const maxAdv = useMemo(

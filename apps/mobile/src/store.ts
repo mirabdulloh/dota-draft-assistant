@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import type { PickOrder, Position } from '@dota/engine';
+import type { Bracket } from './snapshot';
 
 export type SlotTarget = { team: 'enemy' | 'ally' | 'me' | 'ban'; index: number } | null;
 
 type DraftStore = {
+  bracket: Bracket;
   position: Position;
   pickOrder: PickOrder;
   enemies: (number | null)[];
@@ -15,6 +17,7 @@ type DraftStore = {
   detailHero: number | null;
   picking: SlotTarget;
 
+  setBracket: (b: Bracket) => void;
   setPosition: (p: Position) => void;
   setPickOrder: (o: PickOrder) => void;
   start: () => void;
@@ -29,6 +32,7 @@ type DraftStore = {
 const empty = () => [null, null, null, null, null] as (number | null)[];
 
 export const useDraft = create<DraftStore>((set) => ({
+  bracket: 5,
   position: 5,
   pickOrder: 'last',
   enemies: empty(),
@@ -41,6 +45,7 @@ export const useDraft = create<DraftStore>((set) => ({
   detailHero: null,
   picking: null,
 
+  setBracket: (bracket) => set({ bracket }),
   setPosition: (position) => set({ position }),
   setPickOrder: (pickOrder) => set({ pickOrder }),
   start: () => set({ started: true }),

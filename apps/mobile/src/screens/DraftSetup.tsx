@@ -3,7 +3,7 @@ import type { PickOrder, Position } from '@dota/engine';
 import { modeFor } from '@dota/engine';
 import { C, S } from '../theme';
 import { useDraft } from '../store';
-import { snapshotInfo, BRACKET_NAME } from '../snapshot';
+import { snapshotInfoFor, BRACKET_NAME, BRACKETS, type Bracket } from '../snapshot';
 
 const POSITIONS: { value: Position; label: string }[] = [
   { value: 1, label: 'Safe carry' },
@@ -29,16 +29,34 @@ const MODE_BLURB: Record<string, string> = {
 };
 
 export function DraftSetup() {
-  const { position, pickOrder, setPosition, setPickOrder, start } = useDraft();
+  const { bracket, position, pickOrder, setBracket, setPosition, setPickOrder, start } = useDraft();
   const mode = modeFor(pickOrder);
+  const info = snapshotInfoFor(bracket);
 
   return (
     <ScrollView style={st.root} contentContainerStyle={st.content}>
       <Text style={st.h1}>New draft</Text>
       <Text style={st.sub}>
-        {BRACKET_NAME[snapshotInfo.bracket]} · patch {snapshotInfo.patch} ·{' '}
-        {snapshotInfo.matches.toLocaleString()} matches
+        patch {info.patch} · {info.matches.toLocaleString()} matches in this bracket
       </Text>
+
+      <Text style={st.label}>Your bracket</Text>
+      <View style={st.brackets}>
+        {BRACKETS.map((b) => {
+          const on = b === bracket;
+          return (
+            <Pressable
+              key={b}
+              onPress={() => setBracket(b as Bracket)}
+              style={[st.bracket, on && st.bracketOn]}
+            >
+              <Text style={[st.bracketText, on && st.bracketTextOn]} numberOfLines={1}>
+                {BRACKET_NAME[b]}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
       <Text style={st.label}>Your position</Text>
       <View style={st.col}>
@@ -108,6 +126,19 @@ const st = StyleSheet.create({
   rowNumOn: { color: C.accent },
   rowLabel: { color: C.dim, fontSize: 16 },
   rowLabelOn: { color: C.text, fontWeight: '600' },
+  brackets: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 22 },
+  bracket: {
+    paddingHorizontal: 12,
+    minHeight: 40,
+    justifyContent: 'center',
+    backgroundColor: C.surface,
+    borderRadius: S.radius,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  bracketOn: { borderColor: C.accent, backgroundColor: C.surfaceAlt },
+  bracketText: { color: C.dim, fontSize: 13, fontWeight: '600' },
+  bracketTextOn: { color: C.accent },
   chips: { flexDirection: 'row', gap: S.gap, marginBottom: 22 },
   chip: {
     flex: 1,

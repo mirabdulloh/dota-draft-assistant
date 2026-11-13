@@ -94,9 +94,8 @@ async function main() {
     if (cmd === 'export') {
       await migrate(db);
       await exportSnapshot(db, {
-        bracket: flag('bracket', 5),
         patch: opts.patch,
-        out: strFlag('out', new URL('../../mobile/assets/snapshot.json', import.meta.url).pathname),
+        outDir: strFlag('out', new URL('../../mobile/assets/', import.meta.url).pathname),
         refreshItems: process.argv.includes('--refresh-items'),
       });
     }
