@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Dota Draft",
+    "slug": "dota-draft",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0E1116",
+    "assetBundlePatterns": ["**/*"],
+    "ios": { "supportsTablet": false },
+    "android": { "adaptiveIcon": { "backgroundColor": "#0E1116" } },
+    "web": { "bundler": "metro" }
+  }
+}

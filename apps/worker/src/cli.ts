@@ -4,6 +4,7 @@ import { report } from './report.ts';
 import { backtest } from './backtest.ts';
 import { demo } from './demo.ts';
 import { validateSafeMode } from './safe-validation.ts';
+import { exportSnapshot } from './export-snapshot.ts';
 
 function flag(name: string, fallback: number): number {
   const i = process.argv.indexOf(`--${name}`);
@@ -27,6 +28,7 @@ usage: node src/cli.ts <command> [options]
   backtest    train/test split, predict winners on held-out matches
   demo        print live suggestions for sample drafts
   safe-check  validate SAFE mode against held-out outcomes
+  export      write the offline snapshot the app scores against
   report      show what is currently in the database
 
 options:
@@ -88,10 +90,19 @@ async function main() {
       await validateSafeMode(db, { k: opts.k, patch: opts.patch, maxLineups: flag('lineups', 40000) });
     }
 
+    if (cmd === 'export') {
+      await migrate(db);
+      await exportSnapshot(db, {
+        bracket: flag('bracket', 5),
+        patch: opts.patch,
+        out: strFlag('out', new URL('../../mobile/assets/snapshot.json', import.meta.url).pathname),
+      });
+    }
+
     if (cmd === 'report') await migrate(db);
     if (['rebuild', 'aggregate', 'report'].includes(cmd)) await report(db, opts.patch);
 
-    if (!['rebuild', 'ingest', 'aggregate', 'report', 'backtest', 'demo', 'safe-check'].includes(cmd)) {
+    if (!['rebuild', 'ingest', 'aggregate', 'report', 'backtest', 'demo', 'safe-check', 'export'].includes(cmd)) {
       console.log(USAGE);
     }
   } finally {
