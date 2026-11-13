@@ -157,6 +157,9 @@ const st = StyleSheet.create({
   slot: {
     flex: 1,
     aspectRatio: 1.25,
+    // Capped so the hero rows cannot grow and push the top five off screen,
+    // which is a hard requirement: five suggestions visible with no scroll.
+    maxHeight: 58,
     borderRadius: 7,
     borderWidth: 1.5,
     backgroundColor: C.surface,

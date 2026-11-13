@@ -169,25 +169,33 @@ export function createEngine(snapshot: Snapshot, options: EngineOptions = {}) {
     return { mode, picks, avoid, missing };
   }
 
+  /**
+   * Allies are usually already on the board by the time you pick — your
+   * offlaner picking before you is the normal case, not an edge case — so the
+   * reason names both halves when both apply, rather than only the counter.
+   */
   function reasonFor(s: Suggestion, draft: DraftState, mode: Mode): string {
     const i = idx(s.heroId);
-    if (mode === 'SAFE') return 'safe pick, few common counters punish it';
 
     const beats = draft.enemies
       .map((id) => ({ id, adv: advantage(i, idx(id)) }))
       .filter((x) => x.adv > 0.01)
       .sort((a, b) => b.adv - a.adv)
       .slice(0, 2);
-    if (beats.length > 0) return `beats their ${beats.map((b) => name(b.id)).join(', ')}`;
 
     const withAlly = draft.allies
       .map((id) => ({ id, syn: synergy(i, idx(id)) }))
-      .filter((x) => x.syn > 0.005)
+      .filter((x) => x.syn > 0.003)
       .sort((a, b) => b.syn - a.syn)
       .slice(0, 1);
-    if (withAlly.length > 0) return `strong with your ${name(withAlly[0].id)}`;
 
-    return 'strong in this bracket right now';
+    const parts: string[] = [];
+    if (mode === 'SAFE') parts.push('hard to punish');
+    else if (beats.length > 0) parts.push(`beats their ${beats.map((b) => name(b.id)).join(', ')}`);
+    if (withAlly.length > 0) parts.push(`pairs with your ${name(withAlly[0].id)}`);
+
+    if (parts.length === 0) return 'strong in this bracket right now';
+    return parts.join(' · ');
   }
 
   function avoidReasonFor(s: Suggestion, draft: DraftState): string {

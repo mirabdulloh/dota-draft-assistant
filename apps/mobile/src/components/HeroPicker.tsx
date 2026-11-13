@@ -77,6 +77,9 @@ export function HeroPicker() {
           placeholder="Search heroes"
           placeholderTextColor={C.faint}
           autoCorrect={false}
+          // Focused on open: under a pick timer, tapping the field before you
+          // can type is a tap you do not have time for.
+          autoFocus
           style={st.search}
         />
 
